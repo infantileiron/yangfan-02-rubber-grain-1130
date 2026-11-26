@@ -4,6 +4,8 @@ from math import floor, isfinite
 
 from .composition import COMPONENTS
 
+DEFAULT_NEIGHBORS = 3
+
 
 def trial_weight(row: dict) -> int:
     value = row.get("trial_g")

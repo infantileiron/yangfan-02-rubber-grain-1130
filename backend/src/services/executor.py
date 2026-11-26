@@ -12,6 +12,7 @@ from src.constants.workflow import Stage
 from src.models.base import new_id, utcnow
 from src.models.dataset import Dataset
 from src.models.run import Run
+from src.services import calibrations
 from src.services.audit import record
 from src.services.exports import result_keys
 from src.utils.csv_data import render_csv
@@ -65,9 +66,12 @@ def execute(job):
     run_id, lease, parameter, rows = job
     artifact = None
     result = None
+    snapshot = None
     error = None
     try:
-        result = verify_result(analyze(rows, parameter))
+        with Session() as db:
+            neighbor_map, calibration_meta, snapshot = calibrations.published_map(db)
+        result = verify_result(analyze(rows, parameter, neighbor_map, calibration_meta))
         artifact = f"{run_id}-{lease}.csv"
         path = ARTIFACTS / artifact
         temporary = path.with_suffix(".tmp")
@@ -80,10 +84,12 @@ def execute(job):
         error = "计算或导出失败。请检查输入并重新提交。"
     if error:
         result = None
+        snapshot = None
     stage = Stage.FAILED.value if error else Stage.SUCCEEDED.value
     with Session.begin() as db:
         change = db.execute(update(Run).where(Run.id == run_id, Run.lease == lease, Run.status == Stage.RUNNING.value).values(
-            status=stage, result=result, artifact=artifact if not error else None, error=error, finished_at=utcnow(),
+            status=stage, result=result, calibration_snapshot=snapshot,
+            artifact=artifact if not error else None, error=error, finished_at=utcnow(),
         ))
         if change.rowcount:
             record(db, "worker", f"run_{stage}", run_id)

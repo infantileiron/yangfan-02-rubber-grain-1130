@@ -16,6 +16,7 @@ class Run(Base):
     actor: Mapped[str] = mapped_column(String(160))
     status: Mapped[str] = mapped_column(String(20), default=Stage.QUEUED.value, index=True)
     result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    calibration_snapshot: Mapped[list | None] = mapped_column(JSON, nullable=True)
     artifact: Mapped[str | None] = mapped_column(String(100))
     error: Mapped[str | None] = mapped_column(Text)
     lease: Mapped[str | None] = mapped_column(String(36))

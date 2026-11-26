@@ -3,7 +3,20 @@ import { resultChart } from '../components/chart.js';
 import { empty, exportButton, heading } from '../components/common/heading.js';
 import { status } from '../components/common/status.js';
 import { table } from '../components/common/table.js';
+import { neighborSources } from '../constants/enums.js';
 import { escapeHtml as e, shortId, timeText } from '../utils/format.js';
+
+function calibrationPanel(run) {
+  const snapshot = run.calibration_snapshot || [];
+  if (!snapshot.length) {
+    return `<dt>近邻数口径</dt><dd>全部基材沿用旧版默认 ${e(run.parameter)} 近邻（补录称重档案期间）</dd>`;
+  }
+  return snapshot.map(item => `<dt>${e(item.substrate)} 校准</dt>
+    <dd>近邻数 ${item.chosen_neighbors}（默认 ${item.default_neighbors}）<br>
+    所用档案 <a href="#datasets/${item.dataset_id}">${e(shortId(item.dataset_id))}</a><br>
+    盲评母批 ${e(item.blind_master)}，盲评误差 ${e(item.blind_error)} 对 ${e(item.default_blind_error)} 个百分点<br>
+    <a href="#calibrations">查看校准版本</a></dd>`).join('');
+}
 
 export async function resultsPage(profile, account, id) {
   const runs = await api.runs();
@@ -32,8 +45,10 @@ export async function resultsPage(profile, account, id) {
   const result = run.result;
   return {
     html: intro + `<div class="board results-board"><aside class="side">
-      <h2>本次口径</h2><dl class="meta"><dt>${e(profile.parameter.label)}</dt><dd>${e(run.parameter)}</dd>
+      <h2>本次口径与溯源</h2><dl class="meta">
+      <dt>兜底近邻数</dt><dd>${e(run.parameter)}</dd>
       <dt>数据版本</dt><dd><a href="#datasets/${run.dataset_id}">${shortId(run.dataset_id)}</a></dd>
+      ${calibrationPanel(run)}
       </dl><p class="muted">${e(profile.downstream)}</p>
       <a class="button" href="#handoff/${run.id}">查看签审</a>
       </aside><section class="work">
@@ -41,7 +56,13 @@ export async function resultsPage(profile, account, id) {
       <dl class="metrics">${result.metrics.map(metric => `<div><dt>${e(metric.label)}</dt><dd>${e(metric.value)}</dd></div>`).join('')}</dl>
       ${resultChart(result.rows, profile.chart)}
       <h3>${e(profile.labels.action)}</h3>
-      ${table(profile.result_columns, result.rows)}
+      ${table(profile.result_columns, result.rows, (row, column, value) => {
+        if (column.key === 'neighbor_source') return e(neighborSources[value] ?? value);
+        if (column.key === 'archive_dataset_id') return value ? `<a href="#datasets/${value}">${e(shortId(value))}</a>` : '—';
+        if (column.key === 'calibration_id') return value ? `<a href="#calibrations">${e(shortId(value))}</a>` : '—';
+        if (value === null || value === undefined) return '—';
+        return e(value);
+      })}
       <details class="details"><summary>计算说明</summary><ul>${result.notes.map(note => '<li>' + e(note) + '</li>').join('')}</ul></details>
       </section></div>`,
     mount,

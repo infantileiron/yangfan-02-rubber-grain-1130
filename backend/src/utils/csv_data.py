@@ -38,8 +38,9 @@ def coerce(value, field, line):
             return None
         raise ValueError(f"{label}不能为空。")
     if field["type"] == "text":
-        if len(value) > 120:
-            raise ValueError(f"{label}最多 120 字符。")
+        max_length = field.get("max_length", 120)
+        if len(value) > max_length:
+            raise ValueError(f"{label}最多 {max_length} 字符。")
         if field.get("choices") and value not in field["choices"]:
             raise ValueError(f"{label}应为 {' / '.join(field['choices'])}。")
         return value

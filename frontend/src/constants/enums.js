@@ -8,4 +8,19 @@ export const auditActions = {
   run_failed: '计算失败',
   review_approve: '签发交接',
   review_hold: '暂缓交接',
+  calibration_created: '创建校准',
+  calibration_published: '发布校准',
+  calibration_rejected: '校准验收失败',
+  calibration_skipped: '基材跳过校准',
+};
+
+export const calibrationStages = {
+  candidate: '待发布（盲评通过）',
+  published: '已发布',
+  rejected: '盲评未通过',
+};
+
+export const neighborSources = {
+  published_calibration: '已发布校准',
+  fallback: '旧版默认口径',
 };
