@@ -1,0 +1,72 @@
+{
+  "title": "屿垫再材·地垫色粒试配",
+  "subtitle": "从已通过质检的再生橡胶批次里，找出可沿用的四色试配记录。",
+  "team": "屿垫再材收配组，21 人，负责两条再生橡胶拼花地垫生产线的收料、称重试配和样板交接。",
+  "workflow": "打样师从纸本配料记录和旧试片里翻选可用配方，把称重改动手写到试配卡，再交给品控核对批次。",
+  "pain_points": [
+    "历史批次以不同总克数登记，直接比较波动会把同一配方误判为不同。",
+    "低占比浅粒改变地垫斑点外观，直接拿百分点比较容易掩盖相对变化。",
+    "不同胶粒基材和磨耗不通过的配方需要回避，翻阅试片很难及时排除。"
+  ],
+  "upstream": "归档试片的实际称重单、品控验收结论，以及接单台提供的目标四色配比。",
+  "downstream": "打样班根据同基材合格记录安排人工称样，品控以新试片复测色差和磨耗。",
+  "labels": {
+    "datasets": "称重档案",
+    "runs": "试配单",
+    "results": "配方参考",
+    "handoff": "称样交接",
+    "input": "混色批次",
+    "action": "查找合格近邻"
+  },
+  "algorithm": "中心化对数比变换（CLR）与 Aitchison 最近邻",
+  "method": "输入为炭黑、陶红、沙黄、米白四种胶粒的实称克数，最小可检测重量为 0.01 g，未检出填 0。先把每行闭合成比例，把秤未检出的零值按至多 0.05% 替代并按比例缩放其他组分，再取各比例的对数减去其均值。CLR 向量的欧氏距离即 Aitchison 距离。每个目标只匹配基材相同且质检合格的历史批次，所有近邻坐标等权平均后经逆变换得到参考中心。取合格历史样本在同基材内的留一最近距离第 90 百分位，作为是否需要单独复测的距离参考。目标配方调量按最大余数法分配到整克。候选缺失称样重量、配比总量为零、历史缺少验收结论、记录编号重复或合格历史不足以覆盖指定近邻数时，任务返回具体原因。",
+  "seed_name": "yudian_compound_20261125.csv",
+  "scenario": [
+    "08:15，收配员拿到 yudian_compound_20261125.csv，内有两个胶粒基材的 72 条归档记录与 8 条待试配记录。",
+    "08:30，品控员确认 RG-H-070 的配比虽然碰巧与旧金样相同，但磨耗验收未通过。",
+    "09:00，打样师录入 RG-T-01 的 92 / 40 / 36 / 32 g 目标比例，并把新样板标为 750 g。",
+    "09:10，按默认 3 个近邻执行比对，RG-T-01 命中既有合格样 RG-H-001，配比距离为 0。",
+    "09:25，打开 RG-T-02 的四色偏差，查看同基材历史能否支持高米白的新花色。",
+    "09:40，导出配方参考单，给首试样领取 345 / 150 / 135 / 120 g 四色橡胶。",
+    "10:30，品控用实物样板复测色差与磨耗，再决定是否确认批量生产。"
+  ],
+  "columns": [
+    {"key": "sample_id", "label": "批次号", "type": "text"},
+    {"key": "scope", "label": "批次用途", "type": "text", "choices": ["历史归档", "待试配"]},
+    {"key": "substrate", "label": "胶粒基材", "type": "text", "choices": ["再生 EPDM", "再生 SBR"]},
+    {"key": "carbon_g", "label": "炭黑克数", "type": "number", "min": 0, "max": 10000},
+    {"key": "terra_g", "label": "陶红克数", "type": "number", "min": 0, "max": 10000},
+    {"key": "ochre_g", "label": "沙黄克数", "type": "number", "min": 0, "max": 10000},
+    {"key": "ivory_g", "label": "米白克数", "type": "number", "min": 0, "max": 10000},
+    {"key": "inspection", "label": "磨耗验收", "type": "text", "optional": true, "choices": ["合格", "未通过"]},
+    {"key": "trial_g", "label": "称样目标克数", "type": "number", "optional": true, "min": 100, "max": 5000}
+  ],
+  "parameter": {
+    "key": "neighbors",
+    "label": "纳入参考的近邻数",
+    "default": 3,
+    "min": 1,
+    "max": 8,
+    "step": 1,
+    "description": "每个待试配样只查同基材的合格历史记录。增加近邻数会改变配方参考中心。"
+  },
+  "result_columns": [
+    {"key": "sample_id", "label": "待试配批次"},
+    {"key": "substrate", "label": "基材"},
+    {"key": "nearest", "label": "最近合格批次"},
+    {"key": "distance", "label": "Aitchison 距离"},
+    {"key": "decision", "label": "打样优先级"},
+    {"key": "deviation", "label": "相对参考中心的最大调量"},
+    {"key": "target_weighing", "label": "目标四色投料（g）"},
+    {"key": "reference_weighing", "label": "参考中心四色投料（g）"}
+  ],
+  "chart": {"key": "distance", "label": "与最近存档配方的距离"},
+  "theme": {
+    "display": "Fraunces",
+    "body": "Source Sans 3",
+    "hue": 55,
+    "chroma": 0.135,
+    "dark": false,
+    "layout": "ledger"
+  }
+}

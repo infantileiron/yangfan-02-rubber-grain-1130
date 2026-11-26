@@ -1,0 +1,19 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&display=swap");
+:root {
+  color-scheme: light;
+  --font-display: "Fraunces";
+  --font-body: "Source Sans 3";
+  --radius: 0.15rem;
+  --gutter: clamp(1.05rem, 3vw, 3.5rem);
+  --canvas: oklch(96% 0.018 55);
+  --paper: oklch(98% 0.009 55);
+  --side: oklch(92% 0.029 55);
+  --ink: oklch(25% 0.037 55);
+  --muted: oklch(43% 0.043 55);
+  --line: oklch(81% 0.04 55);
+  --accent: oklch(44% 0.135 55);
+  --accent-ink: oklch(37% 0.135 55);
+  --on-accent: oklch(98% 0.011 55);
+  --table-alt: oklch(96% 0.012 55);
+  --error: oklch(42% 0.15 25);
+}
